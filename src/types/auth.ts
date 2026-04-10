@@ -1,7 +1,9 @@
 export interface User {
 	userId: number;
-	email: string;
 	name: string;
+	lastName: string;
+	email: string;
+	role: "pending" | "product_owner" | "lead" | "dev" | "customer";
 	createdAt: string;
 	updatedAt: string;
 }
@@ -12,9 +14,11 @@ export interface AuthResponse {
 }
 
 export interface SignupInput {
+	name: string;
+	lastName: string;
 	email: string;
 	password: string;
-	name: string;
+	role?: "pending" | "product_owner" | "lead" | "dev" | "customer";
 }
 
 export interface LoginInput {

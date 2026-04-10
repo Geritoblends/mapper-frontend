@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "@/lib/constants";
-import type { AuthResponse, SignupInput, LoginInput } from "@/types/auth";
+import type { AuthResponse, SignupInput, LoginInput, User } from "@/types/auth";
 
 export async function signup(data: SignupInput): Promise<AuthResponse> {
 	const response = await fetch(`${API_BASE_URL}/auth/signup`, {
@@ -8,7 +8,7 @@ export async function signup(data: SignupInput): Promise<AuthResponse> {
 			"Content-Type": "application/json",
 		},
 		body: JSON.stringify(data),
-		credentials: "include", // Important for receiving cookies
+		credentials: "include",
 	});
 
 	const responseData = await response.json();
@@ -18,7 +18,9 @@ export async function signup(data: SignupInput): Promise<AuthResponse> {
 			throw new Error("An account with this email address already exists.");
 		}
 		if (response.status === 400 && responseData.errors) {
-			throw new Error(responseData.errors[0]?.message || "Validation failed");
+			// Handle Zod validation errors
+			const firstError = responseData.errors[0];
+			throw new Error(firstError?.message || "Validation failed");
 		}
 		throw new Error(responseData.message || "Signup failed");
 	}
@@ -43,7 +45,8 @@ export async function login(data: LoginInput): Promise<AuthResponse> {
 			throw new Error("Invalid email or password.");
 		}
 		if (response.status === 400 && responseData.errors) {
-			throw new Error(responseData.errors[0]?.message || "Validation failed");
+			const firstError = responseData.errors[0];
+			throw new Error(firstError?.message || "Validation failed");
 		}
 		throw new Error(responseData.message || "Login failed");
 	}
@@ -74,7 +77,12 @@ export async function refreshToken(): Promise<{ access_token: string }> {
 }
 
 export async function getCurrentUser(): Promise<User | null> {
+	const token = localStorage.getItem("access_token");
+
 	const response = await fetch(`${API_BASE_URL}/auth/me`, {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
 		credentials: "include",
 	});
 

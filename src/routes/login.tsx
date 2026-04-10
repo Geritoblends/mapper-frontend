@@ -1,38 +1,31 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { login } from "@/lib/auth";
+import { useLogin } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/login")({
 	component: LoginPage,
 });
 
 function LoginPage() {
-	const nav = useNavigate();
+	const navigate = useNavigate();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 
-	const mutation = useMutation({
-		mutationFn: () => login(email, password),
-		onSuccess: () => {
-			nav({ to: "/" });
-		},
-	});
+	const loginMutation = useLogin();
 
 	return (
 		<section className="auth-layout">
 			{/* LEFT */}
 			<div className="auth-left">
 				<div className="auth-terminal">
-					<p>$ initializing session...</p>
-					<p>$ connecting...</p>
-					{mutation.isPending && <p>$ authenticating...</p>}
-					{mutation.isSuccess && (
-						<p style={{ color: "var(--acc2)" }}>√ success</p>
+					<p>$ authenticating...</p>
+					{loginMutation.isPending && <p>$ verifying credentials...</p>}
+					{loginMutation.isSuccess && (
+						<p style={{ color: "var(--acc2)" }}>√ authenticated</p>
 					)}
-					{mutation.isError && (
+					{loginMutation.isError && (
 						<p style={{ color: "var(--acc5)" }}>
-							× {(mutation.error as Error).message}
+							× {loginMutation.error.message}
 						</p>
 					)}
 				</div>
@@ -42,22 +35,24 @@ function LoginPage() {
 			<div className="auth-right">
 				<div className="auth-header">
 					<span className="chip">login</span>
-					<h2>Access your workspace</h2>
+					<h2>Welcome back</h2>
 				</div>
 
 				<form
 					className="form-block"
 					onSubmit={(e) => {
 						e.preventDefault();
-						mutation.mutate();
+						loginMutation.mutate({ email, password });
 					}}
 				>
 					<div className="fg">
 						<label>EMAIL</label>
 						<input
+							type="email"
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
 							placeholder="you@domain.com"
+							required
 						/>
 					</div>
 
@@ -68,20 +63,25 @@ function LoginPage() {
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
 							placeholder="••••••••"
+							required
 						/>
 					</div>
 
 					<div className="auth-actions">
-						<button className="btn btn-acc" disabled={mutation.isPending}>
-							{mutation.isPending ? "…" : "$ sign in"}
+						<button
+							type="submit"
+							className="btn btn-acc"
+							disabled={loginMutation.isPending}
+						>
+							{loginMutation.isPending ? "…" : "$ login"}
 						</button>
 
 						<button
 							type="button"
 							className="btn"
-							onClick={() => nav({ to: "/signup" })}
+							onClick={() => navigate({ to: "/signup" })}
 						>
-							create account →
+							no account? →
 						</button>
 					</div>
 				</form>
